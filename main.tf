@@ -52,6 +52,7 @@ module "lambda_function" {
   vpc_subnet_ids         = var.subnet_ids
   vpc_security_group_ids = var.security_group_ids
   attach_network_policy  = true
+  recreate_missing_package  = false
 
   create_current_version_allowed_triggers   = false
   create_unqualified_alias_allowed_triggers = true
