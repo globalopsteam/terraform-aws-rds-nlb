@@ -1,4 +1,3 @@
-import json
 import logging
 import random
 import re
@@ -115,10 +114,24 @@ def describe_target_health(tg_arn):
       Get a IP address list of registered targets in the NLB's target group
     """
     registered_ip_list = []
+    reason = "Target.DeregistrationInProgress"
     try:
         response = elbv2_client.describe_target_health(TargetGroupArn=tg_arn)
         for target in response['TargetHealthDescriptions']:
-            registered_ip = target['Target']['Id']
+            if (
+                target['TargetHealth']['State'] != "draining" or
+                target['TargetHealth']['Reason'] != reason
+            ):
+                registered_ip = target['Target']['Id']
+            else:
+                print(target['Target']['Id'],
+                      target['TargetHealth']['State'])
+                logger.info("INFO: {}'s health is {}".format(
+                    target['Target']['Id'], target['TargetHealth']['State']))
+                logger.info("INFO: Not adding {} to registered_ip list".format(
+                    target['Target']['Id']))
+                registered_ip = ""
+
             registered_ip_list.append(registered_ip)
     except ClientError:
         logger.error("ERROR: Can't retrieve Target Group information.")
@@ -144,10 +157,12 @@ def dns_lookup(dns_server, domainname, record_type):
         myResolver.nameservers = [random.choice(name_server_ip_list)]
     else:
         logger.info("INFO: Using default DNS "
-              "resolvers: {}".format(dns.resolver.Resolver().nameservers))
-        myResolver.nameservers = random.choice(dns.resolver.Resolver().nameservers)
+                    "NS: {}".format(dns.resolver.Resolver().nameservers))
+        myResolver.nameservers = random.choice(
+            dns.resolver.Resolver().nameservers)
 
-    logger.info("INFO: Using randomly selected DNS Server: {}".format(myResolver.nameservers))
+    logger.info("INFO: Using randomly selected DNS Server: {}".format(
+        myResolver.nameservers))
     # Resolve FQDN
     try:
         lookupAnswer = myResolver.query(domainname, record_type)
