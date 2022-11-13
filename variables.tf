@@ -59,3 +59,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "invoke_function" {
+  description = "Invoke the lambda function during terraform plan"
+  type        = bool
+  default     = true
+}

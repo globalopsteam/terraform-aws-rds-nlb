@@ -103,6 +103,8 @@ module "lambda_function" {
 # You want to register your db_instances when your apply
 # this module. Don't you ?
 data "aws_lambda_invocation" "this" {
+  count = var.invoke_function ? 1 : 0
+
   function_name = module.lambda_function.lambda_function_qualified_arn
 
   input = <<EOJSON
